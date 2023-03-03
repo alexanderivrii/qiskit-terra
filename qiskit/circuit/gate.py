@@ -119,21 +119,6 @@ class Gate(Instruction):
 
         return add_control(self, num_ctrl_qubits, label, ctrl_state)
 
-    def lazy_control(
-        self,
-        num_ctrl_qubits: int = 1,
-        label: Optional[str] = None,
-        ctrl_state: Optional[Union[str, int]] = None,
-    ):
-
-        from qiskit.circuit import LazyOp  # pylint: disable=cyclic-import
-
-        if isinstance(self, LazyOp):
-            return self.control(num_ctrl_qubits, label, ctrl_state)
-
-        else:
-            return LazyOp(base_op=self, num_ctrl_qubits=num_ctrl_qubits)
-
     @staticmethod
     def _broadcast_single_argument(qarg: List) -> List:
         """Expands a single argument.

@@ -422,20 +422,6 @@ class Instruction(Operation):
         inverse_gate.definition = inverse_definition
         return inverse_gate
 
-    def lazy_inverse(self):
-        """Wraps operation in LazyOp.
-        FIXME: move to Operation.py?
-        """
-        # print(f"INSTRUCTION INVERSE -> LAZY_INVERSE!!!")
-
-        from qiskit.circuit.lazy_op import LazyOp  # pylint: disable=cyclic-import
-
-        if isinstance(self, LazyOp):
-            return self.inverse()
-
-        else:
-            return LazyOp(base_op=self, inverted=True)
-
     def c_if(self, classical, val):
         """Set a classical equality condition on this instruction between the register or cbit
         ``classical`` and value ``val``.

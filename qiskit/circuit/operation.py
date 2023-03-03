@@ -13,6 +13,7 @@
 """Quantum Operation Mixin."""
 
 from abc import ABC, abstractmethod
+from typing import Union, Optional
 
 
 class Operation(ABC):
@@ -60,3 +61,30 @@ class Operation(ABC):
     def num_clbits(self):
         """Number of classical bits."""
         raise NotImplementedError
+
+    def lazy_inverse(self) -> "LazyOp":
+        """
+        Computes lazy_inverse of Operation.
+        """
+        from qiskit.circuit.lazy_op import LazyOp  # pylint: disable=cyclic-import
+
+        if isinstance(self, LazyOp):
+            return self.inverse()
+
+        else:
+            return LazyOp(base_op=self, inverted=True)
+
+    def lazy_control(
+        self,
+        num_ctrl_qubits: int = 1,
+        label: Optional[str] = None,
+        ctrl_state: Optional[Union[str, int]] = None,
+    ):
+
+        from qiskit.circuit import LazyOp  # pylint: disable=cyclic-import
+
+        if isinstance(self, LazyOp):
+            return self.control(num_ctrl_qubits, label, ctrl_state)
+
+        else:
+            return LazyOp(base_op=self, num_ctrl_qubits=num_ctrl_qubits)
