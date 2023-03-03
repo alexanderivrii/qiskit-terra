@@ -417,10 +417,7 @@ class Instruction(Operation):
         inverse_definition = self._definition.copy_empty_like()
         inverse_definition.global_phase = -inverse_definition.global_phase
         for inst in reversed(self._definition):
-            try:
-                inverse_op = inst.operation.real_inverse()
-            except:
-                inverse_op = inst.operation.inverse()
+            inverse_op = inst.operation.inverse()
             inverse_definition._append(inverse_op, inst.qubits, inst.clbits)
         inverse_gate.definition = inverse_definition
         return inverse_gate
