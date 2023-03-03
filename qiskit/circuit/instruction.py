@@ -349,7 +349,36 @@ class Instruction(Operation):
         reverse_inst.definition = reversed_definition
         return reverse_inst
 
+    def print_rec(self, offset=0, depth=100, header=""):
+        """Temporary debugging function."""
+        line = " " * offset + header + " Instruction " + self.name + " "
+        print(line)
+        if depth == 0:
+            return
+        if getattr(self, "definition", None) is not None:
+            def_header = "DefCircuit"
+            self.definition.print_rec(offset + 2, depth - 1, header=def_header)
+
     def inverse(self):
+        """Invert this instruction.
+
+        If the instruction is composite (i.e. has a definition),
+        then its definition will be recursively inverted.
+
+        Special instructions inheriting from Instruction can
+        implement their own inverse (e.g. T and Tdg, Barrier, etc.)
+
+        Returns:
+            qiskit.circuit.Instruction: a fresh instruction for the inverse
+
+        Raises:
+            CircuitError: if the instruction is not composite
+                and an inverse has not been implemented for it.
+        """
+        # return self.lazy_inverse()
+        return self.real_inverse()
+
+    def real_inverse(self):
         """Invert this instruction.
 
         If the instruction is composite (i.e. has a definition),
@@ -388,9 +417,27 @@ class Instruction(Operation):
         inverse_definition = self._definition.copy_empty_like()
         inverse_definition.global_phase = -inverse_definition.global_phase
         for inst in reversed(self._definition):
-            inverse_definition._append(inst.operation.inverse(), inst.qubits, inst.clbits)
+            try:
+                inverse_op = inst.operation.real_inverse()
+            except:
+                inverse_op = inst.operation.inverse()
+            inverse_definition._append(inverse_op, inst.qubits, inst.clbits)
         inverse_gate.definition = inverse_definition
         return inverse_gate
+
+    def lazy_inverse(self):
+        """Wraps operation in LazyOp.
+        FIXME: move to Operation.py?
+        """
+        # print(f"INSTRUCTION INVERSE -> LAZY_INVERSE!!!")
+
+        from qiskit.circuit.lazy_op import LazyOp  # pylint: disable=cyclic-import
+
+        if isinstance(self, LazyOp):
+            return self.inverse()
+
+        else:
+            return LazyOp(base_op=self, inverted=True)
 
     def c_if(self, classical, val):
         """Set a classical equality condition on this instruction between the register or cbit

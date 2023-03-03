@@ -12,6 +12,7 @@
 
 
 """Helper function for converting a circuit to a gate"""
+from qiskit.circuit import LazyOp
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.quantumregister import QuantumRegister
 from qiskit.exceptions import QiskitError
@@ -50,7 +51,7 @@ def circuit_to_gate(circuit, parameter_map=None, equivalence_library=None, label
         raise QiskitError("Circuit with classical bits cannot be converted to gate.")
 
     for instruction in circuit.data:
-        if not isinstance(instruction.operation, Gate):
+        if not isinstance(instruction.operation, (Gate, LazyOp)):
             raise QiskitError(
                 (
                     "One or more instructions cannot be converted to"

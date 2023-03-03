@@ -16,11 +16,11 @@ from typing import Union, Optional
 
 from qiskit.circuit.exceptions import CircuitError
 from qiskit.extensions import UnitaryGate
-from . import ControlledGate, Gate, QuantumRegister, QuantumCircuit
+from . import ControlledGate, Gate, QuantumRegister, QuantumCircuit, Operation
 
 
 def add_control(
-    operation: Union[Gate, ControlledGate],
+    operation: Union[Gate, ControlledGate, Operation],
     num_ctrl_qubits: int,
     label: Union[str, None],
     ctrl_state: Union[int, str, None],
@@ -62,7 +62,7 @@ def add_control(
 
 
 def control(
-    operation: Union[Gate, ControlledGate],
+    operation: Union[Gate, ControlledGate, Operation],
     num_ctrl_qubits: Optional[int] = 1,
     label: Optional[Union[None, str]] = None,
     ctrl_state: Optional[Union[None, int, str]] = None,

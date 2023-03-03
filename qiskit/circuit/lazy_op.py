@@ -1,0 +1,98 @@
+from typing import Optional, Union
+
+from qiskit.circuit.operation import Operation
+
+
+class LazyOp(Operation):
+    """Gate and modifiers inside."""
+
+    def __init__(
+        self,
+        base_op,
+        num_ctrl_qubits=0,
+        inverted=False,
+    ):
+        self.base_op = base_op
+        self.num_ctrl_qubits = num_ctrl_qubits
+        self.inverted = inverted
+
+    @property
+    def name(self):
+        """Unique string identifier for operation type."""
+        return "lazy"
+
+    @property
+    def num_qubits(self):
+        """Number of qubits."""
+        return self.num_ctrl_qubits + self.base_op.num_qubits
+
+    @property
+    def num_clbits(self):
+        """Number of classical bits."""
+        return self.base_op.num_clbits
+
+    def lazy_inverse(self):
+        """Returns lazy inverse
+        Maybe does not belong here
+        """
+
+        # ToDo: Should we copy base_op?
+        return LazyOp(
+            self.base_op,
+            num_ctrl_qubits=self.num_ctrl_qubits,
+            inverted=not self.inverted,
+        )
+
+    def inverse(self):
+        return self.lazy_inverse()
+
+    def lazy_control(
+        self,
+        num_ctrl_qubits: int = 1,
+        label: Optional[str] = None,
+        ctrl_state: Optional[Union[int, str]] = None,
+    ):
+        """Maybe does not belong here"""
+
+        return LazyOp(
+            self.base_op,
+            num_ctrl_qubits=self.num_ctrl_qubits + num_ctrl_qubits,
+            inverted=self.inverted,
+        )
+
+    def control(
+        self,
+        num_ctrl_qubits: int = 1,
+        label: Optional[str] = None,
+        ctrl_state: Optional[Union[int, str]] = None,
+    ):
+        return self.lazy_control(num_ctrl_qubits, label, ctrl_state)
+
+    def __eq__(self, other) -> bool:
+        """Checks if two LazyOps are equal."""
+        print(f"LazyGate::_eq__ {self = }, {other = }")
+        return (
+            isinstance(other, LazyOp)
+            and self.num_ctrl_qubits == other.num_ctrl_qubits
+            and self.num_ctrl_qubits == other.num_ctrl_qubits
+            and self.inverted == other.inverted
+            and self.base_op == other.base_op
+        )
+
+    def print_rec(self, offset=0, depth=100, header=""):
+        """Temporary debug function."""
+        line = (
+            " " * offset + header + " LazyGate " + self.name + "["
+            " c" + str(self.num_ctrl_qubits) + " p" + str(self.inverted) + "]"
+        )
+        print(line)
+        if depth >= 0:
+            self.base_op.print_rec(offset + 2, depth - 1, header="base gate")
+
+    def copy(self) -> "LazyOp":
+        """Return a copy of the :class:`LazyOp`."""
+        return LazyOp(
+            base_op=self.base_op.copy(),
+            num_ctrl_qubits=self.num_ctrl_qubits,
+            inverted=self.inverted,
+        )

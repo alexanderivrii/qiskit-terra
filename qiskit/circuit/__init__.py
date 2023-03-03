@@ -316,6 +316,7 @@ from .gate import Gate
 
 # pylint: disable=cyclic-import
 from .controlledgate import ControlledGate
+from .lazy_op import LazyOp
 from .instruction import Instruction
 from .instructionset import InstructionSet
 from .operation import Operation

@@ -783,6 +783,46 @@ class QuantumCircuit:
 
         return controlled_circ
 
+    def lazy_control(
+        self,
+        num_ctrl_qubits: int = 1,
+        label: Optional[str] = None,
+        ctrl_state: Optional[Union[str, int]] = None,
+    ) -> "QuantumCircuit":
+        """Control this circuit on ``num_ctrl_qubits`` qubits.
+
+        Args:
+            num_ctrl_qubits (int): The number of control qubits.
+            label (str): An optional label to give the controlled operation for visualization.
+            ctrl_state (str or int): The control state in decimal or as a bitstring
+                (e.g. '111'). If None, use ``2**num_ctrl_qubits - 1``.
+
+        Returns:
+            QuantumCircuit: The controlled version of this circuit.
+
+        Raises:
+            CircuitError: If the circuit contains a non-unitary operation and cannot be controlled.
+        """
+        try:
+            gate = self.to_gate()
+        except QiskitError as ex:
+            raise CircuitError(
+                "The circuit contains non-unitary operations and cannot be "
+                "lazy-controlled. Note that no qiskit.circuit.Instruction objects may "
+                "be in the circuit for this operation."
+            ) from ex
+
+        # controlled_gate = gate.control(num_ctrl_qubits, label, ctrl_state)
+        from qiskit.circuit import LazyOp
+
+        controlled_gate = LazyOp(base_op=gate, num_ctrl_qubits=num_ctrl_qubits)
+
+        control_qreg = QuantumRegister(num_ctrl_qubits)
+        controlled_circ = QuantumCircuit(control_qreg, self.qubits, *self.qregs)
+        controlled_circ.append(controlled_gate, controlled_circ.qubits)
+
+        return controlled_circ
+
     def compose(
         self,
         other: Union["QuantumCircuit", Instruction],
@@ -1752,6 +1792,17 @@ class QuantumCircuit:
             return None
         else:
             return string_temp
+
+    def print_rec(self, offset=0, depth=100, header=""):
+        """Temporary debugging function"""
+        line = (
+            " " * offset + header + " Quantum Circuit (" + str(self.num_qubits) + ") " + self.name
+        )
+        print(line)
+        if depth >= 0:
+            for instruction in self.data:
+                qubits = [self.find_bit(q).index for q in instruction.qubits]
+                instruction.operation.print_rec(offset + 2, depth - 1, "data" + str(qubits))
 
     def draw(
         self,
