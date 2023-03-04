@@ -24,7 +24,7 @@ class UnrollLazy(TransformationPass):
 
     def run(self, dag):
         new_dag = dag.copy_empty_like()
-        for node in dag.op_nodes():
+        for node in dag.topological_op_nodes():
             unrolled_op = self._unroll_op(node.op)
             new_dag.apply_operation_back(unrolled_op, node.qargs, node.cargs)
         return new_dag

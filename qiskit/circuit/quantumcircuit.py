@@ -1597,6 +1597,7 @@ class QuantumCircuit:
         # pylint: disable=cyclic-import
         from qiskit.transpiler.passes.basis.decompose import Decompose
         from qiskit.transpiler.passes.synthesis import HighLevelSynthesis
+        from qiskit.transpiler.passes.basis.unroll_lazy import UnrollLazy
         from qiskit.converters.circuit_to_dag import circuit_to_dag
         from qiskit.converters.dag_to_circuit import dag_to_circuit
 
@@ -1605,6 +1606,7 @@ class QuantumCircuit:
         pass_ = Decompose(gates_to_decompose)
         for _ in range(reps):
             dag = pass_.run(dag)
+        dag = UnrollLazy().run(dag)
         return dag_to_circuit(dag)
 
     def qasm(
