@@ -1603,10 +1603,10 @@ class QuantumCircuit:
 
         dag = circuit_to_dag(self)
         dag = HighLevelSynthesis().run(dag)
+        dag = UnrollLazy().run(dag)
         pass_ = Decompose(gates_to_decompose)
         for _ in range(reps):
             dag = pass_.run(dag)
-        dag = UnrollLazy().run(dag)
         return dag_to_circuit(dag)
 
     def qasm(
