@@ -81,7 +81,6 @@ class OptimizeLazy(TransformationPass):
                 continue
 
             if are_inverse_ops(node1.op, node2.op):
-                print("=> INVERSE REDUCTION")
                 removed[idx] = True
                 removed[idx + 1] = True
 
