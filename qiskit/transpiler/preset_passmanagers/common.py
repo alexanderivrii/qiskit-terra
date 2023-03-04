@@ -51,6 +51,7 @@ from qiskit.transpiler.passes.layout.vf2_layout import VF2LayoutStopReason
 from qiskit.transpiler.passes.layout.vf2_post_layout import VF2PostLayoutStopReason
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.layout import Layout
+from qiskit.transpiler.passes.basis import UnrollLazy
 
 _CONTROL_FLOW_OP_NAMES = {"for_loop", "if_else", "while_loop"}
 
@@ -191,6 +192,7 @@ def generate_unroll_3q(
         )
     )
     unroll_3q.append(HighLevelSynthesis(hls_config=hls_config))
+    unroll_3q.append(UnrollLazy(target=target))
     unroll_3q.append(Unroll3qOrMore(target=target, basis_gates=basis_gates))
     return unroll_3q
 
@@ -385,6 +387,7 @@ def generate_translation_passmanager(
                 target=target,
             ),
             HighLevelSynthesis(hls_config=hls_config),
+            UnrollLazy(target=target),
             UnrollCustomDefinitions(sel, basis_gates=basis_gates, target=target),
             BasisTranslator(sel, basis_gates, target),
         ]
@@ -403,6 +406,7 @@ def generate_translation_passmanager(
                 target=target,
             ),
             HighLevelSynthesis(hls_config=hls_config),
+            UnrollLazy(target=target),
             Unroll3qOrMore(target=target, basis_gates=basis_gates),
             Collect2qBlocks(),
             Collect1qRuns(),
@@ -418,6 +422,7 @@ def generate_translation_passmanager(
                 method=unitary_synthesis_method,
                 target=target,
             ),
+            UnrollLazy(target=target),
             HighLevelSynthesis(hls_config=hls_config),
         ]
     else:

@@ -15,11 +15,16 @@ class LazyOp(Operation):
         self.base_op = base_op
         self.num_ctrl_qubits = num_ctrl_qubits
         self.inverted = inverted
+        self._name = "lazy"
 
     @property
     def name(self):
         """Unique string identifier for operation type."""
-        return "lazy"
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
 
     @property
     def num_qubits(self):
@@ -70,7 +75,6 @@ class LazyOp(Operation):
 
     def __eq__(self, other) -> bool:
         """Checks if two LazyOps are equal."""
-        print(f"LazyGate::_eq__ {self = }, {other = }")
         return (
             isinstance(other, LazyOp)
             and self.num_ctrl_qubits == other.num_ctrl_qubits

@@ -375,8 +375,8 @@ class Instruction(Operation):
             CircuitError: if the instruction is not composite
                 and an inverse has not been implemented for it.
         """
-        # return self.lazy_inverse()
-        return self.real_inverse()
+        return self.lazy_inverse()
+        # return self.real_inverse()
 
     def real_inverse(self):
         """Invert this instruction.
@@ -414,10 +414,15 @@ class Instruction(Operation):
         else:
             inverse_gate = Gate(name=name, num_qubits=self.num_qubits, params=self.params.copy())
 
+        from qiskit.circuit import LazyOp
+
         inverse_definition = self._definition.copy_empty_like()
         inverse_definition.global_phase = -inverse_definition.global_phase
         for inst in reversed(self._definition):
             inverse_op = inst.operation.inverse()
+            if isinstance(inverse_op, LazyOp):
+                inverse_op = inst.operation.real_inverse()
+            assert not isinstance(inverse_op, LazyOp)
             inverse_definition._append(inverse_op, inst.qubits, inst.clbits)
         inverse_gate.definition = inverse_definition
         return inverse_gate

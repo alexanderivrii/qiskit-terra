@@ -98,6 +98,14 @@ class Gate(Instruction):
         label: Optional[str] = None,
         ctrl_state: Optional[Union[int, str]] = None,
     ):
+        return self.lazy_control(num_ctrl_qubits=num_ctrl_qubits, label=label, ctrl_state=ctrl_state)
+
+    def real_control(
+        self,
+        num_ctrl_qubits: int = 1,
+        label: Optional[str] = None,
+        ctrl_state: Optional[Union[int, str]] = None,
+    ):
         """Return controlled version of gate. See :class:`.ControlledGate` for usage.
 
         Args:
