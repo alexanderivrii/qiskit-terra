@@ -207,19 +207,31 @@ class TestLazyPasses(QiskitTestCase):
             optimization_level=optimization_level
         )
 
-        t2 = self.transpile_circuit(
+        t2 = self.transpile_optimize_lazy_circuit(
+            self.controlled_qft_adder(num_qubits, num_controls),
+            basis_gates=basis_gates,
+            optimization_level=optimization_level
+        )
+
+        t3 = self.transpile_circuit(
             self.optimized_controlled_qft_adder(num_qubits, num_controls),
             basis_gates=basis_gates,
             optimization_level=optimization_level
         )
 
-        t3 = self.transpile_lazy_circuit(
+        t4 = self.transpile_optimize_lazy_circuit(
+            self.optimized_controlled_qft_adder(num_qubits, num_controls),
+            basis_gates=basis_gates,
+            optimization_level=optimization_level
+        )
+
+        t5 = self.transpile_lazy_circuit(
             self.lazy_controlled_qft_adder(num_qubits, num_controls),
             basis_gates=basis_gates,
             optimization_level=optimization_level
         )
 
-        t4 = self.transpile_optimize_lazy_circuit(
+        t6 = self.transpile_optimize_lazy_circuit(
             self.lazy_controlled_qft_adder(num_qubits, num_controls),
             basis_gates=basis_gates,
             optimization_level=optimization_level
@@ -229,10 +241,14 @@ class TestLazyPasses(QiskitTestCase):
         print(t2.count_ops())
         print(t3.count_ops())
         print(t4.count_ops())
+        print(t5.count_ops())
+        print(t6.count_ops())
 
         self.assertEqual(Operator(t1), Operator(t2))
         self.assertEqual(Operator(t1), Operator(t3))
         self.assertEqual(Operator(t1), Operator(t4))
+        self.assertEqual(Operator(t1), Operator(t5))
+        self.assertEqual(Operator(t1), Operator(t6))
 
     def _test_inverse_cancellation(self):
         """Test inverse cancellation with lazy gates."""
