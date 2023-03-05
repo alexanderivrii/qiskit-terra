@@ -551,9 +551,10 @@ class Operator(LinearOp):
 
         # pylint: disable=cyclic-import
         from qiskit.quantum_info import Clifford
+        from qiskit.circuit import LazyOp
 
-        if not isinstance(obj, (Instruction, Clifford)):
-            raise QiskitError("Input is neither an Instruction nor Clifford.")
+        if not isinstance(obj, (Instruction, Clifford, LazyOp)):
+            raise QiskitError("Input is not an Instruction, LazyOp or Clifford.")
         mat = None
         if hasattr(obj, "to_matrix"):
             # If instruction is a gate first we see if it has a

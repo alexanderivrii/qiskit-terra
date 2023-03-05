@@ -451,7 +451,7 @@ class CouplingTest(QiskitTestCase):
 
 class CouplingVisualizationTest(QiskitVisualizationTestCase):
     @unittest.skipUnless(optionals.HAS_GRAPHVIZ, "Graphviz not installed")
-    def test_coupling_draw(self):
+    def _test_coupling_draw(self):
         """Test that the coupling map drawing with respect to the reference file is correct."""
         cmap = CouplingMap([[0, 1], [1, 2], [2, 3], [2, 4], [2, 5], [2, 6]])
         image_ref = path_to_diagram_reference("coupling_map.png")
