@@ -100,3 +100,21 @@ class LazyOp(Operation):
             num_ctrl_qubits=self.num_ctrl_qubits,
             inverted=self.inverted,
         )
+
+    def to_matrix(self):
+        """Return a matrix representation (allowing to construct Operator)."""
+        import numpy as np
+        from qiskit.quantum_info import Operator
+
+        operator = Operator(self.base_op)
+
+        if self.inverted:
+            operator = operator.power(-1)
+
+        for _ in range(self.num_ctrl_qubits):
+            dim = int(np.log2(operator._input_dim))
+            op0 = Operator(np.eye(2 ** dim)).tensor([[1, 0], [0, 0]])
+            op1 = operator.tensor([[0, 0], [0, 1]])
+            operator = op0 + op1
+
+        return operator.data
