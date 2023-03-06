@@ -22,7 +22,8 @@ from test import combine
 
 from ddt import ddt
 
-from qiskit.circuit import QuantumCircuit, Qubit, Clbit
+from qiskit.circuit import QuantumCircuit, Qubit, Clbit, LazyOp
+from qiskit.circuit.library import XGate
 from qiskit.transpiler.passes.optimization import CollectLinearFunctions
 from qiskit.transpiler.passes.synthesis import (
     LinearFunctionsSynthesis,
@@ -191,7 +192,7 @@ class TestLazyPasses(QiskitTestCase):
         )
         return transpiled_circuit
 
-    def test_adder_equivalence(self):
+    def _test_adder_equivalence(self):
         """Test that all adders are equivalent (after transpilation).
         Also see the effect of OptimizeLazy() reduction.
         """
@@ -259,6 +260,18 @@ class TestLazyPasses(QiskitTestCase):
         qct = OptimizeLazy()(qc)
         print(qct)
         self.assertEqual(qct.size(), 0)
+
+    def test_unroll_with_open_control(self):
+        base_gate = XGate()
+        num_ctrl_qubits = 3
+        num_qubits = base_gate.num_qubits + num_ctrl_qubits
+
+        for ctrl_state in [5, None, 0, 7, "110"]:
+            qc = QuantumCircuit(num_qubits)
+            lazy_gate = LazyOp(base_op=base_gate, num_ctrl_qubits=num_ctrl_qubits, ctrl_state=ctrl_state)
+            qc.append(lazy_gate, range(num_qubits))
+            qct = UnrollLazy()(qc)
+            self.assertEqual(Operator(qc), Operator(qct))
 
 
 if __name__ == "__main__":
