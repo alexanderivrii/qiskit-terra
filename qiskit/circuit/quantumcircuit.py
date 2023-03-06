@@ -2845,15 +2845,20 @@ class QuantumCircuit:
     def _rebind_definition(
         self, instruction: Instruction, parameter: Parameter, value: ParameterValueType
     ) -> None:
+        from qiskit.circuit import LazyOp
         if instruction._definition:
             for inner in instruction._definition:
-                for idx, param in enumerate(inner.operation.params):
-                    if isinstance(param, ParameterExpression) and parameter in param.parameters:
-                        if isinstance(value, ParameterExpression):
-                            inner.operation.params[idx] = param.subs({parameter: value})
-                        else:
-                            inner.operation.params[idx] = param.bind({parameter: value})
-                        self._rebind_definition(inner.operation, parameter, value)
+                # Quick hack for lazy gates
+                if isinstance(inner.operation, LazyOp):
+                    self._rebind_definition(inner.operation.base_op, parameter, value)
+                else:
+                    for idx, param in enumerate(inner.operation.params):
+                        if isinstance(param, ParameterExpression) and parameter in param.parameters:
+                            if isinstance(value, ParameterExpression):
+                                inner.operation.params[idx] = param.subs({parameter: value})
+                            else:
+                                inner.operation.params[idx] = param.bind({parameter: value})
+                            self._rebind_definition(inner.operation, parameter, value)
 
     def barrier(self, *qargs: QubitSpecifier, label=None) -> InstructionSet:
         """Apply :class:`~qiskit.circuit.Barrier`. If qargs is empty, applies to all qubits in the

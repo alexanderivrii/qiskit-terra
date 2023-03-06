@@ -16,6 +16,7 @@
 import io
 import json
 import random
+import unittest
 
 import numpy as np
 
@@ -1070,10 +1071,14 @@ class TestLoadFromQPY(QiskitTestCase):
         self.assertDeprecatedBitProperties(qc, new_circuit)
 
     def test_controlled_gate(self):
-        """Test a custom controlled gate."""
+        """Test a custom controlled gate.
+        LAZY GATES: we need to unroll or else.
+        """
         qc = QuantumCircuit(3)
         controlled_gate = DCXGate().control(1)
         qc.append(controlled_gate, [0, 1, 2])
+        from qiskit.transpiler.passes.basis import UnrollLazy
+        qc = UnrollLazy()(qc)
         qpy_file = io.BytesIO()
         dump(qc, qpy_file)
         qpy_file.seek(0)
@@ -1086,6 +1091,8 @@ class TestLoadFromQPY(QiskitTestCase):
         qc = QuantumCircuit(3)
         controlled_gate = DCXGate().control(1, ctrl_state=0)
         qc.append(controlled_gate, [0, 1, 2])
+        from qiskit.transpiler.passes.basis import UnrollLazy
+        qc = UnrollLazy()(qc)
         qpy_file = io.BytesIO()
         dump(qc, qpy_file)
         qpy_file.seek(0)
@@ -1106,6 +1113,9 @@ class TestLoadFromQPY(QiskitTestCase):
         qc.append(custom_gate, [0])
         controlled_gate = custom_gate.control(2)
         qc.append(controlled_gate, [0, 1, 2])
+        from qiskit.transpiler.passes.basis import UnrollLazy
+        qc = UnrollLazy()(qc)
+
         qpy_file = io.BytesIO()
         dump(qc, qpy_file)
         qpy_file.seek(0)
@@ -1285,3 +1295,6 @@ class TestLoadFromQPY(QiskitTestCase):
         with self.assertWarnsRegex(DeprecationWarning, "is deprecated"):
             # pylint: disable=no-name-in-module, unused-import, redefined-outer-name, reimported
             from qiskit.circuit.qpy_serialization import dump, load
+
+if __name__ == "__main__":
+    unittest.main()

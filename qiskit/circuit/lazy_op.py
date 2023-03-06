@@ -13,12 +13,14 @@ class LazyOp(Operation):
         num_ctrl_qubits=0,
         ctrl_state: Optional[Union[int, str]] = None,
         inverted=False,
+        label: Optional[str] = None,
     ):
         self.base_op = base_op
         self.num_ctrl_qubits = num_ctrl_qubits
         self.ctrl_state = _ctrl_state_to_int(ctrl_state, num_ctrl_qubits)
         self.inverted = inverted
         self._name = "lazy"
+        self.label = label
 
     @property
     def name(self):
