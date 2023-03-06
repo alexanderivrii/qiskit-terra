@@ -39,7 +39,7 @@ class UnrollLazy(TransformationPass):
                     operation=unrolled_op,
                     num_ctrl_qubits=op.num_ctrl_qubits,
                     label=None,
-                    ctrl_state=None,
+                    ctrl_state=op.ctrl_state,
                 )
 
             if op.inverted:

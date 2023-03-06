@@ -87,4 +87,4 @@ class Operation(ABC):
             return self.control(num_ctrl_qubits, label, ctrl_state)
 
         else:
-            return LazyOp(base_op=self, num_ctrl_qubits=num_ctrl_qubits)
+            return LazyOp(base_op=self, num_ctrl_qubits=num_ctrl_qubits, ctrl_state=ctrl_state)

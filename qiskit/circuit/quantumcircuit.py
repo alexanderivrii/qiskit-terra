@@ -815,7 +815,7 @@ class QuantumCircuit:
         # controlled_gate = gate.control(num_ctrl_qubits, label, ctrl_state)
         from qiskit.circuit import LazyOp
 
-        controlled_gate = LazyOp(base_op=gate, num_ctrl_qubits=num_ctrl_qubits)
+        controlled_gate = LazyOp(base_op=gate, num_ctrl_qubits=num_ctrl_qubits, ctrl_state=ctrl_state)
 
         control_qreg = QuantumRegister(num_ctrl_qubits)
         controlled_circ = QuantumCircuit(control_qreg, self.qubits, *self.qregs)

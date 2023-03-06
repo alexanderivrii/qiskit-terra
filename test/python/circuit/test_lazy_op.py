@@ -16,11 +16,13 @@ import unittest
 
 import numpy as np
 
+from qiskit.circuit._utils import _compute_control_matrix
 from qiskit.test import QiskitTestCase
 from qiskit.circuit import QuantumCircuit, Barrier, Measure, Reset, Gate, Operation, LazyOp
 from qiskit.circuit.library import XGate, CXGate, SGate
 from qiskit.quantum_info.operators import Clifford, CNOTDihedral, Pauli
 from qiskit.extensions.quantum_initializer import Initialize, Isometry
+from qiskit.quantum_info import Operator
 
 
 class TestLazyOpClass(QiskitTestCase):
@@ -48,6 +50,16 @@ class TestLazyOpClass(QiskitTestCase):
         self.assertIsInstance(lazy_gate.base_op, CXGate)
         self.assertFalse(lazy_gate.inverted)
         self.assertEqual(lazy_gate.num_ctrl_qubits, 3)
+
+    def test_lazy_open_control(self):
+        base_gate = XGate()
+        base_mat = base_gate.to_matrix()
+        num_ctrl_qubits = 3
+
+        for ctrl_state in [5, None, 0, 7, "110"]:
+            lazy_gate = LazyOp(base_op=base_gate, num_ctrl_qubits=num_ctrl_qubits, ctrl_state=ctrl_state)
+            target_mat = _compute_control_matrix(base_mat, num_ctrl_qubits, ctrl_state)
+            self.assertEqual(Operator(lazy_gate), Operator(target_mat))
 
 
 if __name__ == "__main__":

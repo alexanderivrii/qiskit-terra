@@ -20,6 +20,8 @@ def are_inverse_ops(op1: Operation, op2: Operation) -> bool:
     if isinstance(op1, LazyOp) and isinstance(op2, LazyOp):
         if op1.num_ctrl_qubits != op2.num_ctrl_qubits:
             return False
+        if op1.ctrl_state != op2.ctrl_state:
+            return False
 
         if (op1.inverted == op2.inverted) and are_inverse_ops(op1.base_op, op2.base_op):
             return True

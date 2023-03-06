@@ -81,7 +81,6 @@ class OptimizeLazy(TransformationPass):
                 continue
 
             if are_inverse_ops(node1.op, node2.op):
-                print("=> INVERSE REDUCTION")
                 removed[idx] = True
                 removed[idx + 1] = True
 
@@ -155,6 +154,15 @@ class OptimizeLazy(TransformationPass):
         base_op = op.base_op
         if getattr(base_op, "definition", None) is None:
             return op
+
+        # We don't handle the "open control" case for now, though it can probably be handled as well.
+        # For instance, we could replace a lazy gate L with a new gate G whose definition is
+        #   layer-of-X-gates -- new-lazy-gate -- layer-of-X-gates
+        #   with new-lazy-gate being the "closed control" lazy gate.
+        # But possibly there might be a more direct method as well.
+        if op.ctrl_state < 2**op.num_ctrl_qubits - 1:
+            return op
+
         definition_circuit = base_op.definition
         prefix_circuit, middle_circuit, suffix_circuit = self._split_by_conjugation(definition_circuit)
         if prefix_circuit is None:
