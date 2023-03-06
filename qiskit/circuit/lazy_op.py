@@ -84,14 +84,9 @@ class LazyOp(Operation):
 
     def __eq__(self, other) -> bool:
         """Checks if two LazyOps are equal."""
-        return (
-            isinstance(other, LazyOp)
-            and self.num_ctrl_qubits == other.num_ctrl_qubits
-            and self.num_ctrl_qubits == other.num_ctrl_qubits
-            and self.ctrl_state == other.ctrl_state
-            and self.inverted == other.inverted
-            and self.base_op == other.base_op
-        )
+
+        from qiskit.circuit.inverse import are_equal_ops
+        return are_equal_ops(self, other)
 
     def print_rec(self, offset=0, depth=100, header=""):
         """Temporary debug function."""
@@ -121,3 +116,14 @@ class LazyOp(Operation):
             operator = operator.power(-1)
 
         return _compute_control_matrix(operator.data, self.num_ctrl_qubits, self.ctrl_state)
+
+    @property
+    def definition(self):
+        """
+        Question: do we want lazy ops to have the definition function?
+        """
+        from qiskit.transpiler.passes.basis.unroll_lazy import UnrollLazy
+
+        unrolled_op = UnrollLazy()._unroll_op(self)
+        return unrolled_op.definition
+

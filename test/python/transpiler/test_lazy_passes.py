@@ -251,7 +251,7 @@ class TestLazyPasses(QiskitTestCase):
         self.assertEqual(Operator(t1), Operator(t5))
         self.assertEqual(Operator(t1), Operator(t6))
 
-    def _test_inverse_cancellation(self):
+    def test_inverse_cancellation(self):
         """Test inverse cancellation with lazy gates."""
         qc = QuantumCircuit(3)
         qc.ccx(0, 1, 2)
