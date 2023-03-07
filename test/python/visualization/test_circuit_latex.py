@@ -18,6 +18,7 @@ import unittest
 import math
 import numpy as np
 
+from qiskit.transpiler.passes.basis import UnrollLazy
 from qiskit.visualization import circuit_drawer
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
 from qiskit.providers.fake_provider import FakeTenerife
@@ -26,7 +27,7 @@ from qiskit.extensions import HamiltonianGate
 from qiskit.circuit import Parameter, Qubit, Clbit
 from qiskit.circuit.library import IQP
 from qiskit.quantum_info.random import random_unitary
-from .visualization import QiskitVisualizationTestCase
+from test.python.visualization.visualization import QiskitVisualizationTestCase
 
 pi = np.pi
 
@@ -361,7 +362,7 @@ class TestLatexSourceGenerator(QiskitVisualizationTestCase):
         circuit.append(CU1Gate(pi / 4), [0, 1])
         circuit.append(U2Gate(pi / 2, 3 * pi / 2).control(1), [2, 3])
         circuit.append(CU3Gate(3 * pi / 2, -3 * pi / 4, -pi / 2), [0, 1])
-
+        circuit = UnrollLazy()(circuit)
         circuit_drawer(circuit, filename=filename, output="latex_source")
 
         self.assertEqualToReference(filename)
@@ -419,6 +420,7 @@ class TestLatexSourceGenerator(QiskitVisualizationTestCase):
         circuit.x(1)
         circuit.cswap(0, 1, 2)
         circuit.append(RZZGate(3 * pi / 4).control(3, ctrl_state="010"), [2, 1, 4, 3, 0])
+        circuit = UnrollLazy()(circuit)
 
         circuit_drawer(circuit, filename=filename, output="latex_source")
 
@@ -436,6 +438,7 @@ class TestLatexSourceGenerator(QiskitVisualizationTestCase):
         ghz = ghz_circuit.to_gate()
         ccghz = ghz.control(2, ctrl_state="10")
         circuit.append(ccghz, [4, 0, 1, 3, 2])
+        circuit = UnrollLazy()(circuit)
 
         circuit_drawer(circuit, filename=filename, output="latex_source")
 
@@ -530,6 +533,7 @@ class TestLatexSourceGenerator(QiskitVisualizationTestCase):
         circuit.u(pi / 2, pi / 2, pi / 2, 5)
         circuit.barrier(5, 6)
         circuit.reset(5)
+        circuit = UnrollLazy()(circuit)
 
         circuit_drawer(circuit, filename=filename, output="latex_source")
 

@@ -24,7 +24,7 @@ from qiskit.exceptions import InvalidFileError
 from qiskit.visualization import VisualizationError
 from qiskit.converters import circuit_to_dag
 from qiskit.utils import optionals as _optionals
-from .visualization import path_to_diagram_reference, QiskitVisualizationTestCase
+from test.python.visualization.visualization import path_to_diagram_reference, QiskitVisualizationTestCase
 
 
 class TestDagDrawer(QiskitVisualizationTestCase):
