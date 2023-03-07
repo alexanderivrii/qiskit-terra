@@ -106,7 +106,9 @@ class ComputeUncompute(BaseStateFidelity):
             circuit_1.remove_final_measurements()
         if len(circuit_2.clbits) > 0:
             circuit_2.remove_final_measurements()
-
+        # THE LINE BELOW CREATES A CIRCUIT WITH LAZY GATES!
+        # WHICH LEADS TO ERRORS DOWNSTREAM.
+        # THIS MIGHT NOT NEED BE THE BEST PLACE TO FIX.
         circuit = circuit_1.compose(circuit_2.inverse())
         circuit.measure_all()
         return circuit
@@ -141,7 +143,6 @@ class ComputeUncompute(BaseStateFidelity):
             ValueError: At least one pair of circuits must be defined.
             AlgorithmError: If the sampler job is not completed successfully.
         """
-
         circuits = self._construct_circuits(circuits_1, circuits_2)
         if len(circuits) == 0:
             raise ValueError(
