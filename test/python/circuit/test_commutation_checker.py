@@ -377,6 +377,10 @@ class TestCommutationChecker(QiskitTestCase):
         res = CommutationChecker().commute(XGate(), [30], [], MCXGate(29), list(range(30)), [])
         self.assertTrue(res)
 
+    def test_if_works(self):
+        """Dummy"""
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()
