@@ -19,7 +19,7 @@ from ddt import ddt, data
 from qiskit.quantum_info import Operator
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.library import XGate
-from qiskit.synthesis.multi_controlled import synth_c3x, synth_mcx_n_dirty_i15, synth_mcx_noaux_v24
+from qiskit.synthesis.multi_controlled.mcx_synthesis import synth_c3x, synth_mcx_n_dirty_i15, synth_mcx_noaux_v24_rust
 from qiskit.circuit._utils import _compute_control_matrix
 from qiskit.quantum_info.operators.operator_utils import _equal_with_ancillas
 
@@ -80,7 +80,7 @@ class TestMCXSynth(QiskitTestCase):
     @data(1, 2, 3, 4, 5, 6, 7, 8)
     def test_mcx_noaux_v24(self, num_ctrl_qubits: int):
         """Test synth_mcx_noaux_v24."""
-        synthesized_circuit = synth_mcx_noaux_v24(num_ctrl_qubits)
+        synthesized_circuit = synth_mcx_noaux_v24_rust(num_ctrl_qubits)
         self.assertTrue(
             self.check_mcx_synthesis(num_ctrl_qubits, synthesized_circuit, clean_ancillas=False)
         )
