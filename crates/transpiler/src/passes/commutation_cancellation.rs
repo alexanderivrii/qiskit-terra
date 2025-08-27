@@ -212,38 +212,27 @@ pub fn cancel_commutations(
                         _ => panic!("Unexpected type in commutation set run."),
                     };
                     let node_op_name = node_op.op.name();
-
-                    let node_angle = if ROTATION_GATES.contains(&node_op_name) {
+                    let (node_angle, phase_update) = if ROTATION_GATES.contains(&node_op_name) {
                         match node_op.params_view().first() {
-                            Some(Param::Float(f)) => Ok(*f),
+                            Some(Param::Float(f)) => Ok((*f, 0.0)),
                             _ => return Err(QiskitError::new_err(format!(
                                 "Rotational gate with parameter expression encountered in cancellation {:?}",
                                 node_op.op
-                            )))
+                            ))),
                         }
                     } else if HALF_TURNS.contains(&node_op_name) {
-                        Ok(PI)
+                        Ok((PI, PI / 2.0))
                     } else if QUARTER_TURNS.contains(&node_op_name) {
-                        Ok(PI / 2.0)
+                        Ok((PI / 2.0, PI / 4.0))
                     } else if EIGHTH_TURNS.contains(&node_op_name) {
-                        Ok(PI / 4.0)
+                        Ok((PI / 4.0, PI / 8.0))
                     } else {
                         Err(PyRuntimeError::new_err(format!(
                             "Angle for operation {node_op_name} is not defined"
                         )))
-                    };
-                    total_angle += node_angle?;
-
-                    let Param::Float(new_phase) = node_op
-                        .op
-                        .definition(node_op.params_view())
-                        .unwrap()
-                        .global_phase()
-                        .clone()
-                    else {
-                        unreachable!()
-                    };
-                    total_phase += new_phase
+                    }?;
+                    total_angle += node_angle;
+                    total_phase += phase_update;
                 }
 
                 let new_op = match cancel_key.gate {
@@ -252,24 +241,19 @@ pub fn cancel_commutations(
                     _ => unreachable!(),
                 };
 
-                let gate_angle = euler_one_qubit_decomposer::mod_2pi(total_angle, 0.);
+                let total_angle_mod_4pi = total_angle.rem_euclid(4. * PI);
+                if (total_angle_mod_4pi - 2. * PI).abs() < _CUTOFF_PRECISION {
+                    total_phase += PI;
+                } else if (total_angle_mod_4pi > _CUTOFF_PRECISION)
+                    && (4. * PI - total_angle_mod_4pi > _CUTOFF_PRECISION)
+                {
+                    dag.insert_1q_on_incoming_qubit(
+                        (*new_op, &[total_angle_mod_4pi]),
+                        cancel_set[0],
+                    );
+                }
 
-                let new_op_phase: f64 = if gate_angle.abs() > _CUTOFF_PRECISION {
-                    dag.insert_1q_on_incoming_qubit((*new_op, &[total_angle]), cancel_set[0]);
-                    let Param::Float(new_phase) = new_op
-                        .definition(&[Param::Float(total_angle)])
-                        .unwrap()
-                        .global_phase()
-                        .clone()
-                    else {
-                        unreachable!();
-                    };
-                    new_phase
-                } else {
-                    0.0
-                };
-
-                dag.add_global_phase(&Param::Float(total_phase - new_op_phase))?;
+                dag.add_global_phase(&Param::Float(total_phase))?;
 
                 for node in cancel_set {
                     dag.remove_op_node(*node);
