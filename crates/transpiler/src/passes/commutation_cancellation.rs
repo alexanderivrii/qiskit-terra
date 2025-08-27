@@ -24,13 +24,10 @@ use crate::commutation_checker::CommutationChecker;
 use qiskit_circuit::dag_circuit::{DAGCircuit, NodeType, Wire};
 use qiskit_circuit::operations::{Operation, Param, StandardGate};
 use qiskit_circuit::Qubit;
-use qiskit_synthesis::{euler_one_qubit_decomposer, QiskitError};
+use qiskit_synthesis::QiskitError;
 
 const _CUTOFF_PRECISION: f64 = 1e-5;
 static ROTATION_GATES: [&str; 4] = ["p", "u1", "rz", "rx"];
-static HALF_TURNS: [&str; 2] = ["z", "x"];
-static QUARTER_TURNS: [&str; 1] = ["s"];
-static EIGHTH_TURNS: [&str; 1] = ["t"];
 
 static VAR_Z_MAP: [(&str, StandardGate); 3] = [
     ("rz", StandardGate::RZ),
@@ -211,32 +208,42 @@ pub fn cancel_commutations(
                         NodeType::Operation(instr) => instr,
                         _ => panic!("Unexpected type in commutation set run."),
                     };
+
                     let node_op_name = node_op.op.name();
+
                     let (node_angle, phase_update) = if ROTATION_GATES.contains(&node_op_name) {
-                        match node_op.params_view().first() {
-                            Some(Param::Float(f)) => Ok((*f, 0.0)),
-                            _ => return Err(QiskitError::new_err(format!(
+                        if let Some(Param::Float(f)) = node_op.params_view().first() {
+                            match node_op_name {
+                                "p" | "u1" => (*f, *f / 2.0),
+                                "rz" | "rx" => (*f, 0.0),
+                                _ => unreachable!("Parametric rotation gates can be only p, u1, rz, and rx at this point.")
+                            }
+                        } else {
+                            return Err(QiskitError::new_err(format!(
                                 "Rotational gate with parameter expression encountered in cancellation {:?}",
                                 node_op.op
-                            ))),
+                            )));
                         }
-                    } else if HALF_TURNS.contains(&node_op_name) {
-                        Ok((PI, PI / 2.0))
-                    } else if QUARTER_TURNS.contains(&node_op_name) {
-                        Ok((PI / 2.0, PI / 4.0))
-                    } else if EIGHTH_TURNS.contains(&node_op_name) {
-                        Ok((PI / 4.0, PI / 8.0))
                     } else {
-                        Err(PyRuntimeError::new_err(format!(
-                            "Angle for operation {node_op_name} is not defined"
-                        )))
-                    }?;
+                        match node_op_name {
+                            "z" | "x" => (PI, PI / 2.0),
+                            "s" => (PI / 2.0, PI / 4.0), // ToDo: include Sdg
+                            "t" => (PI / 4.0, PI / 8.0), // ToDo: include Tdg
+                            _ => {
+                                return Err(PyRuntimeError::new_err(format!(
+                                    "Angle for operation {node_op_name} is not defined"
+                                )));
+                            }
+                        }
+                    };
+
                     total_angle += node_angle;
                     total_phase += phase_update;
                 }
 
                 let new_op = match cancel_key.gate {
-                    GateOrRotation::ZRotation => z_var_gate.unwrap(),
+                    GateOrRotation::ZRotation => &StandardGate::RZ,
+                    // GateOrRotation::ZRotation => z_var_gate.unwrap(),
                     GateOrRotation::XRotation => &StandardGate::RX,
                     _ => unreachable!(),
                 };

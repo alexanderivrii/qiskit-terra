@@ -150,8 +150,9 @@ class TestCommutativeCancellation(QiskitTestCase):
             )
         )
         new_circuit = passmanager.run(circuit)
-        expected = QuantumCircuit(qr)
+        expected = QuantumCircuit(qr, global_phase=np.pi)
 
+        self.assertEqual(Operator(new_circuit), Operator(circuit))
         self.assertEqual(expected, new_circuit)
 
     def test_2_alternating_cnots(self):
@@ -689,6 +690,8 @@ class TestCommutativeCancellation(QiskitTestCase):
             expected.qubits,
             expected.clbits,
         )
+
+        expected.global_phase = np.pi / 2  # Obtained when merging X and RX gates
 
         passmanager = PassManager([CommutationAnalysis(), CommutativeCancellation()])
         new_circuit = passmanager.run(test)
