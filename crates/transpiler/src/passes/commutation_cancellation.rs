@@ -34,13 +34,15 @@ static VAR_Z_MAP: [(&str, StandardGate); 3] = [
     ("p", StandardGate::Phase),
     ("u1", StandardGate::U1),
 ];
-static Z_ROTATIONS: [StandardGate; 6] = [
+static Z_ROTATIONS: [StandardGate; 8] = [
     StandardGate::Phase,
     StandardGate::Z,
     StandardGate::U1,
     StandardGate::RZ,
-    StandardGate::T,
     StandardGate::S,
+    StandardGate::Sdg,
+    StandardGate::T,
+    StandardGate::Tdg,
 ];
 static X_ROTATIONS: [StandardGate; 2] = [StandardGate::X, StandardGate::RX];
 static SUPPORTED_GATES: [StandardGate; 5] = [
@@ -210,7 +212,6 @@ pub fn cancel_commutations(
                     };
 
                     let node_op_name = node_op.op.name();
-
                     let (node_angle, phase_update) = if ROTATION_GATES.contains(&node_op_name) {
                         if let Some(Param::Float(f)) = node_op.params_view().first() {
                             match node_op_name {
@@ -227,8 +228,10 @@ pub fn cancel_commutations(
                     } else {
                         match node_op_name {
                             "z" | "x" => (PI, PI / 2.0),
-                            "s" => (PI / 2.0, PI / 4.0), // ToDo: include Sdg
-                            "t" => (PI / 4.0, PI / 8.0), // ToDo: include Tdg
+                            "s" => (PI / 2.0, PI / 4.0),
+                            "sdg" => (-PI / 2.0, -PI / 4.0),
+                            "t" => (PI / 4.0, PI / 8.0),
+                            "tdg" => (-PI / 4.0, -PI / 8.0),
                             _ => {
                                 return Err(PyRuntimeError::new_err(format!(
                                     "Angle for operation {node_op_name} is not defined"
@@ -243,7 +246,6 @@ pub fn cancel_commutations(
 
                 let new_op = match cancel_key.gate {
                     GateOrRotation::ZRotation => &StandardGate::RZ,
-                    // GateOrRotation::ZRotation => z_var_gate.unwrap(),
                     GateOrRotation::XRotation => &StandardGate::RX,
                     _ => unreachable!(),
                 };
