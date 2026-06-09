@@ -1275,10 +1275,12 @@ class OptimizeCliffordTPassManager(PassManagerCliffordTStagePlugin):
                 return PassManager(translate_to_target)
 
             case 1 | 2:
+                pre_loop = [OptimizeCliffordT(basis_gates=basis_gates)]
                 loop = []
                 loop_check, continue_loop = _optimization_check_fixed_point_clifford_t()
                 post_loop = translate_to_target
             case 3:
+                pre_loop = []
                 loop = [
                     OptimizeCliffordT(basis_gates=basis_gates),
                     CommutativeOptimization(
@@ -1303,6 +1305,7 @@ class OptimizeCliffordTPassManager(PassManagerCliffordTStagePlugin):
                 raise TranspilerError(f"Invalid optimization_level: {bad}")
 
         optimization = PassManager()
+        optimization.append(pre_loop)
         optimization.append(loop_check)
         optimization.append(DoWhileController(loop + loop_check, do_while=continue_loop))
         optimization.append(post_loop)
