@@ -1307,6 +1307,7 @@ class OptimizeCliffordTPassManager(PassManagerCliffordTStagePlugin):
         optimization = PassManager()
         optimization.append(pre_loop)
         optimization.append(loop_check)
-        optimization.append(DoWhileController(loop + loop_check, do_while=continue_loop))
+        if loop != []:
+            optimization.append(DoWhileController(loop + loop_check, do_while=continue_loop))
         optimization.append(post_loop)
         return optimization
