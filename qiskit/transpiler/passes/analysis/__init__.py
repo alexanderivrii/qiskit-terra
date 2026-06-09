@@ -27,6 +27,7 @@ __all__ = [
     "CountOpsLongestPath",
     "DAGLongestPath",
     "Depth",
+    "GateCount",
     "NumQubits",
     "NumTensorFactors",
     "ResourceEstimation",

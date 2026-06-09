@@ -497,7 +497,7 @@ def _optimization_check_fixed_point_clifford_rz():
         Size(recurse=True),
         GateCount(gates=["rz"], key="rz_count", recurse=True),
         FixedPoint("size"),
-        FixedPoint("t_count"),
+        FixedPoint("rz_count"),
     ]
     return (setup, check)
 
@@ -1174,14 +1174,9 @@ class OptimizeCliffordRZPassManager(PassManagerCliffordTStagePlugin):
                         plugin_config=pass_manager_config.unitary_synthesis_plugin_config,
                         target=None,
                     ),
-                ]
-                # The optimization loop runs OptimizeCliffordT + CommutativeCancellation
-                # until fixpoint.
-                loop = [
-                    RemoveIdentityEquivalent(
-                        approximation_degree=pass_manager_config.approximation_degree,
-                        target=pass_manager_config.target,
-                    ),
+                    # CommutativeOptimization removes gates that are equivalent to identity, so no need
+                    # to explicitly run RemoveIdentityEquivalent before. In addition, it needs a single
+                    # run to find all possible reductions, so no need to run it in a loop.
                     CommutativeOptimization(
                         approximation_degree=(
                             pass_manager_config.approximation_degree
@@ -1191,6 +1186,7 @@ class OptimizeCliffordRZPassManager(PassManagerCliffordTStagePlugin):
                     ),
                     ContractIdleWiresInControlFlow(),
                 ]
+                loop = []
 
                 # CommutativeOptimization may produce RX gates, so we need BasisTranslator
                 # to convert them back to RZ-gates.
@@ -1201,7 +1197,8 @@ class OptimizeCliffordRZPassManager(PassManagerCliffordTStagePlugin):
 
         optimization = PassManager()
         optimization.append(pre_loop + loop_check)
-        optimization.append(DoWhileController(loop + loop_check, do_while=continue_loop))
+        if loop != []:
+            optimization.append(DoWhileController(loop + loop_check, do_while=continue_loop))
         optimization.append(post_loop)
         return optimization
 
@@ -1277,15 +1274,11 @@ class OptimizeCliffordTPassManager(PassManagerCliffordTStagePlugin):
             case 0:
                 return PassManager(translate_to_target)
 
-            case 1:
-                loop = [
-                    InverseCancellation(),
-                    OptimizeCliffordT(basis_gates=basis_gates),
-                    ContractIdleWiresInControlFlow(),
-                ]
+            case 1 | 2:
+                loop = []
                 loop_check, continue_loop = _optimization_check_fixed_point_clifford_t()
                 post_loop = translate_to_target
-            case 2 | 3:
+            case 3:
                 loop = [
                     OptimizeCliffordT(basis_gates=basis_gates),
                     CommutativeOptimization(
@@ -1304,7 +1297,6 @@ class OptimizeCliffordTPassManager(PassManagerCliffordTStagePlugin):
                     ),
                     ContractIdleWiresInControlFlow(),
                 ]
-                # loop_check, continue_loop = _optimization_check_fixed_point()
                 loop_check, continue_loop = _optimization_check_fixed_point_clifford_t()
                 post_loop = translate_to_target
             case bad:
