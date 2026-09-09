@@ -511,15 +511,12 @@ impl MctsAlgorithm {
 
     /// Backpropagate estimated value from the terminal state up through the tree.
     fn backpropagate(&mut self, leaf_node_id: usize, value: usize) {
-        let mut node_id = leaf_node_id;
-        loop {
-            let node = &mut self.mcts_nodes[node_id];
+        let mut node_id = Some(leaf_node_id);
+        while let Some(id) = node_id {
+            let node = &mut self.mcts_nodes[id];
             node.ni += 1;
             node.qi += value;
-            match node.parent {
-                Some(parent) => node_id = parent,
-                None => break,
-            }
+            node_id = node.parent;
         }
     }
 
@@ -596,12 +593,9 @@ impl MctsAlgorithm {
         }
 
         let mut mcts_node_id = 0; // root
-        loop {
-            // If all the Paulis have been processed, return the current id.
-            if self.mcts_nodes[mcts_node_id].synthesis_state.num_processed == self.num_paulis {
-                return mcts_node_id;
-            }
 
+        // If all the Paulis have been processed, return the current id.
+        while self.mcts_nodes[mcts_node_id].synthesis_state.num_processed != self.num_paulis {
             // Node includes unexplored actions (Paulis that can be immediately synthesized).
             // We will create a new MCTS by synthesizing one of the unexplored Paulis and removing
             // newly synthesized rotations.
@@ -657,6 +651,8 @@ impl MctsAlgorithm {
                 .unwrap()
                 .0;
         }
+
+        mcts_node_id
     }
 
     /// Find or create the next k MCTS nodes to start the rollout from
@@ -694,12 +690,8 @@ impl MctsAlgorithm {
     fn process_synthesized_paulis(&self, state: &mut PauliSynthesisState) {
         // Runs recursively because processing one single-qubit Pauli in the front layer may enable
         // additional single-qubit Paulis in the following layers.
-        loop {
-            // All the Paulis have been processed.
-            if state.num_processed == self.num_paulis {
-                break;
-            }
 
+        while state.num_processed != self.num_paulis {
             // Find Paulis of weight 1 in the front layer,
             let mut new_processed: Vec<usize> = Vec::new();
             let frontier_nodes = compute_frontier_nodes(&self.dag, &state.in_degrees);
@@ -777,11 +769,7 @@ impl MctsAlgorithm {
         // We are cloning this state, since are going to update it in-place.
         let mut synthesis_state = self.mcts_nodes[mcts_node_id].synthesis_state.clone();
 
-        if synthesis_state.num_processed == self.num_paulis {
-            return synthesis_state.gate_sequence.clone();
-        }
-
-        loop {
+        while synthesis_state.num_processed != num_paulis {
             // Compute front nodes.
             let front_nodes = compute_frontier_nodes(&self.dag, &synthesis_state.in_degrees);
 
@@ -802,6 +790,7 @@ impl MctsAlgorithm {
                 break;
             }
         }
+
         synthesis_state.gate_sequence
     }
 }
