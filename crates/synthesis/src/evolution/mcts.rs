@@ -594,8 +594,12 @@ impl MctsAlgorithm {
 
         let mut mcts_node_id = 0; // root
 
-        // If all the Paulis have been processed, return the current id.
-        while self.mcts_nodes[mcts_node_id].synthesis_state.num_processed != self.num_paulis {
+        loop {
+            // If all the Paulis have been processed, return the current id.
+            if self.mcts_nodes[mcts_node_id].synthesis_state.num_processed == self.num_paulis {
+                return mcts_node_id;
+            }
+
             // Node includes unexplored actions (Paulis that can be immediately synthesized).
             // We will create a new MCTS by synthesizing one of the unexplored Paulis and removing
             // newly synthesized rotations.
@@ -651,8 +655,6 @@ impl MctsAlgorithm {
                 .unwrap()
                 .0;
         }
-
-        mcts_node_id
     }
 
     /// Find or create the next k MCTS nodes to start the rollout from
@@ -690,8 +692,12 @@ impl MctsAlgorithm {
     fn process_synthesized_paulis(&self, state: &mut PauliSynthesisState) {
         // Runs recursively because processing one single-qubit Pauli in the front layer may enable
         // additional single-qubit Paulis in the following layers.
+        loop {
+            // All the Paulis have been processed.
+            if state.num_processed == self.num_paulis {
+                break;
+            }
 
-        while state.num_processed != self.num_paulis {
             // Find Paulis of weight 1 in the front layer,
             let mut new_processed: Vec<usize> = Vec::new();
             let frontier_nodes = compute_frontier_nodes(&self.dag, &state.in_degrees);
@@ -784,11 +790,6 @@ impl MctsAlgorithm {
 
             // Update the state by finding all Paulis that got synthesized.
             self.process_synthesized_paulis(&mut synthesis_state);
-
-            // Check if all the Paulis are processed now.
-            if synthesis_state.num_processed == num_paulis {
-                break;
-            }
         }
 
         synthesis_state.gate_sequence
