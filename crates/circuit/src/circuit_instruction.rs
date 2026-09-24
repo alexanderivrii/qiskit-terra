@@ -446,6 +446,7 @@ impl CircuitInstruction {
                                     &ParameterExpression::from_f64(*left) == right.as_ref()
                                 }
                                 Param::Obj(right) => right.bind(py).eq(left)?,
+                                Param::Int(_) => false,
                             },
                             Param::ParameterExpression(left) => match right {
                                 Param::Float(right) => {
@@ -453,8 +454,23 @@ impl CircuitInstruction {
                                 }
                                 Param::ParameterExpression(right) => left == right,
                                 Param::Obj(right) => right.bind(py).eq(left.as_ref().clone())?,
+                                Param::Int(right) => {
+                                    let right_val: crate::parameter::symbol_expr::Value =
+                                        (*right).into();
+                                    left.as_ref() == &ParameterExpression::from(right_val)
+                                }
                             },
                             Param::Obj(left) => left.bind(py).eq(right)?,
+                            Param::Int(left) => match right {
+                                Param::Float(_) => false,
+                                Param::ParameterExpression(right) => {
+                                    let left_val: crate::parameter::symbol_expr::Value =
+                                        (*left).into();
+                                    &ParameterExpression::from(left_val) == right.as_ref()
+                                }
+                                Param::Obj(right) => right.bind(py).eq(left)?,
+                                Param::Int(right) => left == right,
+                            },
                         };
                         if !eq {
                             return Ok(false);
@@ -1021,13 +1037,13 @@ pub fn extract_params<T: CircuitBlock>(
         OperationRef::StandardInstruction(i) => {
             match &i {
                 StandardInstruction::Barrier(_) => None,
-                StandardInstruction::Delay(_) => {
+                StandardInstruction::Delay(unit) => {
                     // If the delay's duration is a Python int, we preserve it rather than
                     // coercing it to a float (e.g. when unit is 'dt').
                     Some(Parameters::Params(
                         params
                             .try_iter()?
-                            .map(|p| Param::extract_no_coerce(p?.as_borrowed()))
+                            .map(|p| Param::extract_duration(p?.as_borrowed(), unit))
                             .collect::<PyResult<_>>()?,
                     ))
                 }
