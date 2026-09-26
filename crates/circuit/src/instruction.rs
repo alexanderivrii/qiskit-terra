@@ -11,11 +11,10 @@
 // that they have been altered from the originals.
 
 use crate::circuit_data::CircuitData;
-use crate::custom_operations::{QFTGate, create_py_op_for_qft};
 use crate::operations::{OperationRef, Param};
+use crate::py_convertible::create_py_op as create_custom_py_op;
 use ndarray::Array2;
 use num_complex::Complex64;
-use pyo3::exceptions::{PyNotImplementedError, PyRuntimeError};
 use pyo3::prelude::*;
 use smallvec::SmallVec;
 
@@ -195,19 +194,11 @@ pub fn create_py_op(
         }
         OperationRef::PyCustom(inst) => Ok(inst.ob.clone_ref(py)),
         OperationRef::Unitary(unitary) => unitary.create_py_op(py, label),
-        OperationRef::CustomOperation(custom) => match custom.name() {
-            "qft" => {
-                let Some(downcast_op) = custom.downcast_ref::<QFTGate>() else {
-                    return Err(PyRuntimeError::new_err(
-                        "expected a custom operation named 'qft' to be a QFTGate",
-                    ));
-                };
-                create_py_op_for_qft(py, downcast_op)
-            }
-            _ => Err(PyNotImplementedError::new_err(
-                "Custom operations from Rust cannot be exposed to Python",
-            )),
-        },
+        // Dispatched by the concrete type's `TypeId`. Errors if that type does not implement
+        // `PyConvertible` or was never registered.
+        OperationRef::CustomOperation(custom) => {
+            create_custom_py_op(py, custom, params.map(|p| p.unwrap_params()), label)
+        }
         OperationRef::Store(store) => store.create_py_op(py, label),
     }
 }

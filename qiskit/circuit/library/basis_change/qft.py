@@ -13,10 +13,9 @@
 """Define a Quantum Fourier Transform circuit (QFT) and a native gate (QFTGate)."""
 
 from __future__ import annotations
-import numpy as np
-from qiskit._accelerate.circuit import QFTGate as _RustQFTGate
+from qiskit._accelerate.circuit_library import QFTGate as _RustQFTGate
 
-from qiskit.circuit.quantumcircuit import QuantumRegister, CircuitInstruction, Gate
+from qiskit.circuit.quantumcircuit import QuantumCircuit, QuantumRegister, CircuitInstruction, Gate
 from qiskit.utils.deprecation import deprecate_func
 from ..blueprintcircuit import BlueprintCircuit
 
@@ -326,14 +325,12 @@ class QFTGate(Gate):
             "'num_qubits' cannot be set on a QFTGate; construct a new QFTGate instead"
         )
 
-    def __array__(self, dtype=complex, copy=None):
+    def __array__(self, dtype=None, copy=None):
         """Return a numpy array for the QFTGate."""
-        if copy is False:
-            raise ValueError("unable to avoid copy while creating an array as requested")
-        return np.asarray(self._inner.matrix(), dtype=dtype)
+        return self._inner.__array__(dtype=dtype, copy=copy)
 
     def _define(self):
         """Provide a specific decomposition of the QFTGate into a quantum circuit."""
-        from qiskit.synthesis.qft import synth_qft_full
-
-        self.definition = synth_qft_full(num_qubits=self.num_qubits)
+        self._definition = QuantumCircuit._from_circuit_data(
+            self._inner.definition(), legacy_qubits=True
+        )

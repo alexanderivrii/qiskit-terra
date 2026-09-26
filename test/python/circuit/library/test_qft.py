@@ -346,6 +346,38 @@ class TestQFTGate(QiskitTestCase):
         self.assertEqual(qc1, qc2)
         self.assertNotEqual(qc1, qc3)
 
+    def test_subclassing(self):
+        """Test that subclasses of QFTGate are added and retrived from circuits correctly."""
+
+        class QFTGateWithAncillas(QFTGate):
+            """A subclass of QFTGate that stores additional fields."""
+
+            def __init__(self, num_qubits, num_acillas):
+                self.num_ancillas = num_acillas
+                super().__init__(num_qubits)
+
+        # Define a gate
+        gate = QFTGateWithAncillas(3, 6)
+        self.assertEqual(gate.num_qubits, 3)
+        self.assertEqual(gate.num_ancillas, 6)
+        self.assertEqual(gate.name, "qft")
+        self.assertIsInstance(gate, QFTGate)
+        self.assertIsInstance(gate, QFTGateWithAncillas)
+
+        # Append it to a quantum circuit
+        qc = QuantumCircuit(3)
+        qc.append(gate, [0, 1, 2])
+
+        # Retrieve the gate
+        roundtrip = qc[0].operation
+
+        # Make sure the expected properties work correctly
+        self.assertEqual(roundtrip.num_qubits, 3)
+        self.assertEqual(roundtrip.num_ancillas, 6)
+        self.assertEqual(roundtrip.name, "qft")
+        self.assertIsInstance(roundtrip, QFTGate)
+        self.assertIsInstance(roundtrip, QFTGateWithAncillas)
+
 
 if __name__ == "__main__":
     unittest.main()

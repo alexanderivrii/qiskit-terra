@@ -30,7 +30,6 @@ use qiskit_circuit::bit::{
     ClassicalRegister, QuantumRegister, Register, ShareableClbit, ShareableQubit,
 };
 use qiskit_circuit::circuit_data::{CircuitData, PyCircuitData};
-use qiskit_circuit::custom_operations;
 use qiskit_circuit::instruction::Parameters;
 use qiskit_circuit::interner::Interned;
 use qiskit_circuit::operations::{
@@ -44,6 +43,7 @@ use qiskit_circuit::parameter::symbol_expr::SymbolVector;
 use qiskit_circuit::var_stretch_container::{StretchType, VarType};
 use qiskit_circuit::{Block, classical, imports};
 use qiskit_circuit::{Clbit, Qubit};
+use qiskit_circuit_library::custom_operations::qft::QFTGate;
 use std::str::FromStr;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -475,12 +475,11 @@ fn unpack_custom_operation(
     instruction: &formats::CircuitInstructionV2Pack,
     qpy_data: &mut QPYReadData,
 ) -> Result<(PackedOperation, Vec<GenericValue>), QpyError> {
-    // This is a placeholder implementation; in a real implementation, you would deserialize the custom operation properly.
-    // let op = PackedOperation::from_custom_operation_name(&instruction.gate_class_name);
+    // This is a placeholder implementation.
     let op = match instruction.gate_class_name.as_str() {
-        "qft" => PackedOperation::from_custom_operation(Box::new(custom_operations::QFTGate::new(
-            instruction.num_qargs,
-        ))),
+        "qft" => {
+            PackedOperation::from_custom_operation(Box::new(QFTGate::new(instruction.num_qargs)))
+        }
         _ => {
             return Err(QpyError::InvalidInstruction(format!(
                 "Unrecognized custom operation {}",
